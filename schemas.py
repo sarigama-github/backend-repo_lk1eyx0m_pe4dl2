@@ -1,48 +1,48 @@
 """
-Database Schemas
+Database Schemas for AVESSAS site
 
-Define your MongoDB collection schemas here using Pydantic models.
-These schemas are used for data validation in your application.
-
-Each Pydantic model represents a collection in your database.
-Model name is converted to lowercase for the collection name:
-- User -> "user" collection
-- Product -> "product" collection
-- BlogPost -> "blogs" collection
+Each Pydantic model maps to a MongoDB collection using the lowercase class name.
+Examples:
+- ContactMessage -> "contactmessage"
+- BlogPost -> "blogpost"
+- CaseStudy -> "casestudy"
+- NewsletterSubscriber -> "newslettersubscriber"
 """
 
-from pydantic import BaseModel, Field
-from typing import Optional
+from pydantic import BaseModel, Field, EmailStr
+from typing import Optional, List
+from datetime import datetime
 
-# Example schemas (replace with your own):
+# ---------------------- Core Collections ----------------------
 
-class User(BaseModel):
-    """
-    Users collection schema
-    Collection name: "user" (lowercase of class name)
-    """
-    name: str = Field(..., description="Full name")
-    email: str = Field(..., description="Email address")
-    address: str = Field(..., description="Address")
-    age: Optional[int] = Field(None, ge=0, le=120, description="Age in years")
-    is_active: bool = Field(True, description="Whether user is active")
+class ContactMessage(BaseModel):
+    name: str = Field(..., min_length=2, max_length=120, description="Nome do contacto")
+    company: Optional[str] = Field(None, max_length=160, description="Empresa")
+    email: EmailStr = Field(..., description="E-mail para contacto")
+    message: str = Field(..., min_length=5, max_length=4000, description="Mensagem")
+    subscribed: bool = Field(False, description="Aceitou newsletter")
 
-class Product(BaseModel):
-    """
-    Products collection schema
-    Collection name: "product" (lowercase of class name)
-    """
-    title: str = Field(..., description="Product title")
-    description: Optional[str] = Field(None, description="Product description")
-    price: float = Field(..., ge=0, description="Price in dollars")
-    category: str = Field(..., description="Product category")
-    in_stock: bool = Field(True, description="Whether product is in stock")
+class NewsletterSubscriber(BaseModel):
+    email: EmailStr
+    name: Optional[str] = None
+    company: Optional[str] = None
+    source: str = Field("website", description="Origem da subscrição")
 
-# Add your own schemas here:
-# --------------------------------------------------
+class BlogPost(BaseModel):
+    title: str = Field(..., min_length=3, max_length=200)
+    slug: str = Field(..., min_length=3, max_length=220)
+    summary: str = Field(..., min_length=10, max_length=400)
+    content: str = Field(..., min_length=20)
+    author: str = Field("Equipa AVESSAS")
+    tags: List[str] = Field(default_factory=list)
+    published_at: Optional[datetime] = None
+    cover_image: Optional[str] = None
 
-# Note: The Flames database viewer will automatically:
-# 1. Read these schemas from GET /schema endpoint
-# 2. Use them for document validation when creating/editing
-# 3. Handle all database operations (CRUD) directly
-# 4. You don't need to create any database endpoints!
+class CaseStudy(BaseModel):
+    client: str = Field(..., min_length=2, max_length=140)
+    sector: Optional[str] = None
+    challenge: str
+    approach: str
+    impact: str
+    metrics: Optional[List[str]] = Field(default_factory=list)
+    logo: Optional[str] = None
